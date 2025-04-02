@@ -3,7 +3,7 @@ import requests
 from telebot import TeleBot, types
 
 # Use an environment variable for security
-BOT_TOKEN = os.getenv("7737404369:AAED1wktYDwq45jN_V8pfVgN9ETNR5ogGaU")  # Set this in your environment
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Set this in your environment
 bot = TeleBot(BOT_TOKEN)
 
 # Function to fetch vehicle data
