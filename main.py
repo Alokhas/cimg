@@ -1,32 +1,38 @@
+import os
 import requests
 from telebot import TeleBot, types
 
-# Replace with your actual bot token
-BOT_TOKEN = "7737404369:AAED1wktYDwq45jN_V8pfVgN9ETNR5ogGaU"
-
+# Use an environment variable for security
+BOT_TOKEN = os.getenv("7737404369:AAED1wktYDwq45jN_V8pfVgN9ETNR5ogGaU")  # Set this in your environment
 bot = TeleBot(BOT_TOKEN)
 
 # Function to fetch vehicle data
 def get_vehicle_info(vehicle_number):
     url = f"https://lucky-grass-19e2.lxonfire.workers.dev/?car={vehicle_number}"
-    response = requests.get(url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         return response.json()
-    return None
+    except requests.RequestException:
+        return None
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.send_message(message.chat.id, "Welcome! Send a vehicle number to get details.")
+    user_name = message.from_user.first_name or "User"
+    bot.send_message(
+        message.chat.id,
+        f"Hello {user_name} 👋\n\nSend me any vehicle number to get its information."
+    )
 
 @bot.message_handler(func=lambda message: True)
 def fetch_vehicle_details(message):
     chat_id = message.chat.id
     vehicle_number = message.text.strip()
 
-    sent_msg = bot.send_message(chat_id, "Fetching vehicle details...")
+    sent_msg = bot.send_message(chat_id, "🔍 Fetching vehicle details...")
 
     data = get_vehicle_info(vehicle_number)
-    
+
     if data and "data" in data:
         vehicle_data = data["data"]
         image_url = data.get("image", "")
@@ -53,13 +59,12 @@ def fetch_vehicle_details(message):
 *Insurance Expiry:* `{vehicle_data.get("insurance_Expiry_Date", "N/A")}`
 """
 
-        bot.delete_message(chat_id, sent_msg.message_id)
+        bot.edit_message_text("✅ Vehicle details found!", chat_id, sent_msg.message_id)
         if image_url:
             bot.send_photo(chat_id, image_url, caption=caption, parse_mode="Markdown")
         else:
             bot.send_message(chat_id, caption, parse_mode="Markdown")
     else:
-        bot.delete_message(chat_id, sent_msg.message_id)
-        bot.send_message(chat_id, "Failed to fetch vehicle details. Please try again.")
+        bot.edit_message_text("❌ Failed to fetch vehicle details. Please try again.", chat_id, sent_msg.message_id)
 
 bot.polling(none_stop=True)
