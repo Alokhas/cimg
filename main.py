@@ -1,9 +1,12 @@
 import os
 import requests
 from telebot import TeleBot, types
+from dotenv import load_dotenv
 
-# Use an environment variable for security
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # Set this in your environment
+# Load environment variables
+load_dotenv()
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Set this in a .env file for security
+
 bot = TeleBot(BOT_TOKEN)
 
 # Function to fetch vehicle data
@@ -12,7 +15,10 @@ def get_vehicle_info(vehicle_number):
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        if isinstance(data, dict):
+            return data
+        return None
     except requests.RequestException:
         return None
 
@@ -33,7 +39,7 @@ def fetch_vehicle_details(message):
 
     data = get_vehicle_info(vehicle_number)
 
-    if data and "data" in data:
+    if data and isinstance(data, dict) and "data" in data and isinstance(data["data"], dict):
         vehicle_data = data["data"]
         image_url = data.get("image", "")
 
@@ -65,6 +71,6 @@ def fetch_vehicle_details(message):
         else:
             bot.send_message(chat_id, caption, parse_mode="Markdown")
     else:
-        bot.edit_message_text("❌ Failed to fetch vehicle details. Please try again.", chat_id, sent_msg.message_id)
+        bot.edit_message_text("❌ Failed to fetch vehicle details. Please check the vehicle number and try again.", chat_id, sent_msg.message_id)
 
 bot.polling(none_stop=True)
