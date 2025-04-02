@@ -1,10 +1,7 @@
 import os
 import requests
 from telebot import TeleBot, types
-from dotenv import load_dotenv
-
 # Load environment variables
-load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # Set this in a .env file for security
 
 bot = TeleBot(BOT_TOKEN)
